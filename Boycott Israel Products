@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Boycott Israel Products</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#000000">
+  <link rel="manifest" href="manifest.json">
+  <script src="https://unpkg.com/@ericblade/quagga2@1.2.6/dist/quagga.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background-color: #f2f2f2;
+      padding: 20px;
+    }
+    #scanner-container {
+      width: 100%;
+      max-width: 500px;
+      margin: auto;
+      border: 3px solid #000;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    #message {
+      margin-top: 20px;
+      font-size: 22px;
+      font-weight: bold;
+    }
+    .alert {
+      color: red;
+    }
+    .safe {
+      color: green;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Ummati ho to mazlumo ki pukar suno</h1>
+  <h2>Israel products ka boycott karo</h2>
+
+  <div id="scanner-container"></div>
+  <div id="message"></div>
+
+  <script>
+    const blacklist = [
+      "7290001234567", "7290012345678", "729" // Add more barcodes
+    ];
+
+    function isIsraeliProduct(code) {
+      return code.startsWith("729") || blacklist.includes(code);
+    }
+
+    function startScanner() {
+      Quagga.init({
+        inputStream: {
+          name: "Live",
+          type: "LiveStream",
+          target: document.querySelector('#scanner-container'),
+          constraints: {
+            facingMode: "environment"
+          },
+        },
+        decoder: {
+          readers: ["ean_reader"]
+        },
+      }, function (err) {
+        if (err) {
+          console.error(err);
+          return;
+        }
+        Quagga.start();
+      });
+
+      Quagga.onDetected(function (data) {
+        const code = data.codeResult.code;
+        if (isIsraeliProduct(code)) {
+          document.getElementById('message').innerHTML =
+            `Barcode: ${code}<br><span class="alert">Israel product detected! Boycott this product!</span>`;
+        } else {
+          document.getElementById('message').innerHTML =
+            `Barcode: ${code}<br><span class="safe">This product is not from Israel.</span>`;
+        }
+        Quagga.stop();
+        setTimeout(() => {
+          document.getElementById('message').innerHTML = "";
+          Quagga.start();
+        }, 3000);
+      });
+    }
+
+    window.addEventListener('load', () => {
+      startScanner();
+
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('service-worker.js')
+          .then(() => console.log('Service Worker Registered'));
+      }
+    });
+  </script>
+
+</body>
+</html>
